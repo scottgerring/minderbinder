@@ -1,0 +1,42 @@
+agents_of_chaos:
+  syscall:  
+    - name: break_curl_openat
+      syscall: openat
+      # for syscalls with 'errno', the error number is positive, and sign-flipped
+      # for the return from the kernel. glibc then provides access to the errno
+      # as the flipped result of the last failed system call.
+      #
+      # because some system calls use errno and some do not, we can't generically
+      # deal with this, so we require each syscall chaos config to explicitly provide
+      # the ret code and not the error code.
+      #
+      # you can consult the man page for the system calls for this - e.g. here's
+      # openat --> https://manpages.debian.org/unstable/manpages-dev/openat.2.en.html
+      ret_code: -2 # NOENT / no such file or directory
+      targets:
+        - process_name: curl
+      delay_ms: 100
+      failure_rate: 100
+
+
+    - name: break_vim_file_opening
+      syscall: open
+      ret_code: -1
+      targets:
+        - process_name: vim
+        - process_name: cat
+      delay_ms: 100
+      failure_rate: 100
+
+  outgoing_network:
+    - name: break_wget_network
+      targets:
+        - process_name: wget
+      delay_ms: 100
+      failure_rate: 100
+
+    - name: break_ping
+      targets:
+        - process_name: ping
+      delay_ms: 100 # Try and let DNS through
+      failure_rate: 50
