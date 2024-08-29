@@ -11,6 +11,13 @@ Presently it can inject failures into **system calls** by attaching kprobes to t
 ## What's it for?
 Minderbinder aims to make it easy to generically inject failures into processes. At the moment you can write a config.yaml that describes the failures to inject and the processes to inject them into, start minderbinder, and see what happens. 
 
+<details>
+<summary>Video demo</summary>
+	
+[h265.webm](https://github.com/user-attachments/assets/73cc8c3e-c447-4e0f-95c4-2e15d3f5fe70)
+
+</details>
+
 ## Running Minderbinder
 Check out [config.yaml](config.yaml) for a complete example. Minderbinder supports two different interventions - `syscall` and `outgoing_network`:
 
