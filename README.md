@@ -38,10 +38,12 @@ To run minderbinder, you specify the configuration file, and if you are using `o
 sudo ./minderbinder --interface enp67s0 config.yaml
 ```
 
+Note: The graphs that pop up show general system call behaviour across the monitored values, and don't directly reflect the
+actions minderbinder is performing on the targeted processes.
 
 ## Big Picture
 
-The long-term goal is to provide a back-end for existing unit test frameworks, so that we can write component tests that can trivially break the code under test in interesting, chaos-related fashions. Something like this:
+The long-term goal is to provide a back-end for existing unit test frameworks, so that we can write component tests that can trivially break the code under test in interesting, chaos-related fashions. This might look something like this:
 
 ```go
 func TestYourAPIHandler_DownstreamFailure(t *testing.T) {
