@@ -14,7 +14,7 @@ Minderbinder aims to make it easy to generically inject failures into processes.
 <details>
 <summary>Video demo</summary>
 	
-[h265.webm](https://github.com/user-attachments/assets/73cc8c3e-c447-4e0f-95c4-2e15d3f5fe70)
+[demo](https://github.com/user-attachments/assets/73cc8c3e-c447-4e0f-95c4-2e15d3f5fe70)
 
 </details>
 
@@ -90,4 +90,3 @@ func TestYourAPIHandler_DownstreamFailure(t *testing.T) {
 
 This gives us a mechanism to test our application and services resiliance in the face of failures. Traditionally we would do this either by extensively stubbing _all_ the interesting interfaces around the application and injecting failures, or, using some chaos engineering tool to inject failures into the entire aggregate system in a deployed cloud environment. Because Minderbinder leverages eBPF for the failure injection, the code needed for each supported language would be straightforward, as it would simply have to configure the native minderbinder component.
 
-t
