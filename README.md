@@ -6,7 +6,9 @@ _“Yossarian also thought Milo was a jerk; but he also know that Milo was a gen
 
 ## What is this?
 Minderbinder is a tool that uses eBPF to inject failures into running processes. 
-Presently it can inject failures into **system calls** by attaching kprobes to the system call handler and failures into **outgoing network traffic** by attaching a traffic filter to the [TC subsystem](https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/8/html/configuring_and_managing_networking/linux-traffic-control_configuring-and-managing-networking). 
+Presently it can inject failures into **system calls** by attaching kprobes to the system call handler and failures into **outgoing network traffic** by attaching a traffic filter to Linux's traffic control subsystem. 
+
+You can read a bit more about the motiviation and implementation details [in this blog entry](blog.scottgerring.com/introducing-minderbinder/ ). 
 
 ## What's it for?
 Minderbinder aims to make it easy to generically inject failures into processes. At the moment you can write a config.yaml that describes the failures to inject and the processes to inject them into, start minderbinder, and see what happens. 
@@ -47,6 +49,81 @@ sudo ./minderbinder --interface enp67s0 config.yaml
 
 Note: The graphs that pop up show general system call behaviour across the monitored values, and don't directly reflect the
 actions minderbinder is performing on the targeted processes.
+
+## How's it work?
+
+Here's a helpful diagram! At a high level, the flow is:
+
+* The user-space app reads the configuration file, attaches necessary probes, and writes the configuration into `syscall_target_config` and `outgoing_network_config` eBPF maps
+* The `execve` kprobes catch new processes launching. Upon finding processes that match targets in the `_config` maps, they add the PID data to the target configuration and update the corresponding `_target` map. For example, a matched element in `syscall_target_config` leads to a PID+target configuration being added to `syscall_targets`
+* The eBPF responsible for each module then fires for its particular hooks, and upon finding a relevant entry in its `_targets` map, and "breaks" the operation being considered accordingly
+
+```mermaid
+graph LR
+    classDef mapClass fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef probeClass fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef mapLink stroke:#f9f,stroke-width:2px,stroke-dasharray: 5, 5;
+    classDef defaultClass fill:#fff,stroke:#333,stroke-width:2px;
+
+    subgraph "Configuration Maps"
+        A[syscall_target_config]:::mapClass
+        D[outgoing_network_config]:::mapClass
+    end
+
+    subgraph "App - Configuration Loading"
+        F[Load Configuration]
+        G[Load Syscall Targets]
+        H[Load Outgoing Net Targets]
+
+        F --> G --> A
+        F --> H --> D
+    end 
+
+    subgraph "Runtime Maps"
+        B[syscall_targets]:::mapClass
+        E[outgoing_network_targets]:::mapClass
+    end
+
+    subgraph "execve Process Targeting"
+        C[execve_data]:::mapClass
+        L["Is Syscall Target?"]
+        M["Is Outgoing Net Target?"]
+
+        I["kprobe(execve)"]:::probeClass --> J["Record parent details"] --> C
+        K["kretprobe(execve)"]:::probeClass --> L
+        K --> M
+        A -.-> L
+        D -.-> M
+        C -.-> L
+        C -.-> M
+        L --> B
+        M --> E
+    end
+
+    subgraph "syscall Module"
+         N["kprobe(targeted_syscall)"]:::probeClass 
+         N --> O["Targeted process?"]
+         B -.-> O
+         O --> P["Delay past?"]
+         P --> Q["Random chance met?"]
+         Q --> R["bpf_override_return(err)"]
+    end
+
+   subgraph "TC Module"
+        X["cgroup(sock_create)"]:::probeClass
+        X --> Y["Targeted process?"]
+        E -.->Y
+        Y --> Z["Set socket mark"]
+
+         S["tc(filter)"]:::probeClass 
+         S --> T["Socket mark set?"]
+         E -.-> T
+         T --> U["Delay past?"]
+         U --> V["Random chance met?"]
+         V --> W["return TC_ACT_STOLEN"]
+    end
+```
+
 
 ## Big Picture
 
