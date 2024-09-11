@@ -8,7 +8,7 @@ _“Yossarian also thought Milo was a jerk; but he also know that Milo was a gen
 Minderbinder is a tool that uses eBPF to inject failures into running processes. 
 Presently it can inject failures into **system calls** by attaching kprobes to the system call handler and failures into **outgoing network traffic** by attaching a traffic filter to Linux's traffic control subsystem. 
 
-You can read a bit more about the motiviation and implementation details [in this blog entry](blog.scottgerring.com/introducing-minderbinder/ ). 
+You can read a bit more about the motiviation and implementation details [in this blog entry](https://blog.scottgerring.com/introducing-minderbinder/ ). 
 
 ## What's it for?
 Minderbinder aims to make it easy to generically inject failures into processes. At the moment you can write a config.yaml that describes the failures to inject and the processes to inject them into, start minderbinder, and see what happens. 
